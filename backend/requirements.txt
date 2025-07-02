@@ -1,0 +1,12 @@
+# Core FastAPI dependencies
+fastapi
+uvicorn[standard] # asgi server with extra dependencies
+pydantic # data validation
+python-dotenv # environment variables
+
+# Basic HTTP and data handling
+requests #http reuqests
+httpx # http client
+
+# Development
+python-multipart # handle file uploads + form data
