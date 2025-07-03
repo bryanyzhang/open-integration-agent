@@ -37,6 +37,7 @@ We are trying to:
 - **Intelligent API Parser**: Multi-model AI agent using Claude Sonnet 4 and Gemini Pro for comprehensive API documentation analysis
 - **Multi-Platform Support**: Successfully tested with all 6 target platforms (Stripe, HubSpot, Shopify, QuickBooks, Zendesk, Jira)
 - **Structured Data Extraction**: Extracts endpoints, authentication, rate limits, pagination, and integration notes
+- **Ontology Mapper Agent**: Maps API endpoints/entities to ontology tables using name similarity
 
 ### 🎯 Target Platforms
 
@@ -91,7 +92,7 @@ npm run dev
 
 The backend will run on `http://localhost:8000` and the frontend on `http://localhost:3000`.
 
-## 🧪 Testing the API Parser
+## 🧪 Testing the API Parser and Ontology Mapper
 
 Test the intelligent parser with any API documentation URL:
 
@@ -99,6 +100,31 @@ Test the intelligent parser with any API documentation URL:
 curl -X POST "http://localhost:8000/api/parse-doc" \
   -H "Content-Type: application/json" \
   -d '{"url": "https://docs.stripe.com/api"}'
+```
+
+Test the ontology mapping agent with a parsed API spec and ontology schema:
+
+```bash
+curl -X POST "http://localhost:8000/api/map-ontology" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_spec": {
+      "endpoints": [
+        {"path": "/api/users", "data_type": "users", "description": "Get all users"},
+        {"path": "/api/orders", "data_type": "orders", "description": "Get all orders"}
+      ],
+      "data_models": [
+        {"name": "users", "fields": ["id", "name", "email"]},
+        {"name": "orders", "fields": ["id", "user_id", "total"]}
+      ]
+    },
+    "ontology_schema": {
+      "tables": [
+        {"name": "users", "fields": ["id", "name", "email"]},
+        {"name": "orders", "fields": ["id", "user_id", "total"]}
+      ]
+    }
+  }'
 ```
 
 ### 🤖 Multi-Model AI Architecture
@@ -143,4 +169,15 @@ These URLs consistently extract 10+ entities:
 
 ## 📝 About This Project
 
-This project was created as a takehome assignment for **Aden**. The goal is to demonstrate how intelligent agents can automate complex data onboarding tasks that traditionally require significant manual effort. 
+This project was created as a takehome assignment for **Aden**. The goal is to demonstrate how intelligent agents can automate complex data onboarding tasks that traditionally require significant manual effort.
+
+## 🧪 Running Unit Tests
+
+Unit tests for the ontology mapping logic are included in `backend/test_ontology_mapper.py` and can be run with:
+
+```bash
+cd backend
+pytest test_ontology_mapper.py
+```
+
+The ontology mapping agent uses Claude 3.5 Sonnet in production, but the unit tests mock the Claude API for fast, reliable testing. 

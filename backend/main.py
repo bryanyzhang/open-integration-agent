@@ -27,6 +27,10 @@ app.add_middleware(
 class ParseDocRequest(BaseModel):
     url: str
 
+class MapOntologyRequest(BaseModel):
+    api_spec: dict
+    ontology_schema: dict
+
 # basic health check endpoint
 @app.get("/")
 async def root():
@@ -49,6 +53,12 @@ async def parse_doc(request: ParseDocRequest):
         raise HTTPException(status_code=500, detail=f"Failed to parse API documentation: {result.get('error', 'Unknown error')}")
     
     return result
+
+@app.post("/api/map-ontology")
+async def map_ontology(request: MapOntologyRequest):
+    from ontology_mapper import map_api_to_ontology
+    mapping = map_api_to_ontology(request.api_spec, request.ontology_schema)
+    return mapping
 
 if __name__ == "__main__":
     import uvicorn

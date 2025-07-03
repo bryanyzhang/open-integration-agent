@@ -2,7 +2,8 @@ import requests
 from bs4 import BeautifulSoup, Tag
 from typing import Dict
 import anthropic
-import google.generativeai as genai
+# DISABLED FOR DEV: Comment out Gemini import to avoid rate limits
+# import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 
@@ -21,14 +22,16 @@ class IntelligentAPIParser:
         self.gemini_client = None
         
         # Try to initialize Gemini if API key is available
-        gemini_api_key = os.getenv('GOOGLE_API_KEY')
-        if gemini_api_key:
-            try:
-                genai.configure(api_key=gemini_api_key)
-                self.gemini_client = genai.GenerativeModel('gemini-1.5-pro')
-            except Exception as e:
-                print(f"Warning: Could not initialize Gemini client: {e}")
-                self.gemini_client = None
+        # DISABLED FOR DEV: Comment out Gemini to avoid rate limits
+        # gemini_api_key = os.getenv('GOOGLE_API_KEY')
+        # if gemini_api_key:
+        #     try:
+        #         genai.configure(api_key=gemini_api_key)
+        #         self.gemini_client = genai.GenerativeModel('gemini-1.5-pro')
+        #     except Exception as e:
+        #         print(f"Warning: Could not initialize Gemini client: {e}")
+        #         self.gemini_client = None
+        self.gemini_client = None  # Force Claude-only mode
         
         if not os.getenv('ANTHROPIC_API_KEY'):
             raise ValueError("ANTHROPIC_API_KEY environment variable is required")
