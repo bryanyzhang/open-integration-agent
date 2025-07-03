@@ -83,9 +83,9 @@ function App() {
             <div className="examples">
               <h3>Example API Documentation URLs:</h3>
               <ul>
-                <li>Stripe: https://docs.stripe.com/api</li>
-                <li>Shopify: https://shopify.dev/docs/api</li>
-                <li>HubSpot: https://developers.hubspot.com/docs/api/overview</li>
+                <li>Petstore: https://petstore.swagger.io/</li>
+                <li>JSONPlaceholder: https://jsonplaceholder.typicode.com/</li>
+                <li>HubSpot Objects: https://developers.hubspot.com/docs/api/crm/objects</li>
                 <li>QuickBooks: https://developer.intuit.com/app/developer/qbo/docs/develop</li>
               </ul>
             </div>
