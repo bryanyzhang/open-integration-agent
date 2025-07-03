@@ -8,5 +8,11 @@ python-dotenv # environment variables
 requests #http reuqests
 httpx # http client
 
+# Web scraping and parsing
+beautifulsoup4 # web scraping
+
+# AI/LLM
+anthropic # claude
+
 # Development
 python-multipart # handle file uploads + form data

@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware # lets us make requests from frontend to backend
+from pydantic import BaseModel
 from dotenv import load_dotenv
+from api_parser import get_api_parser
 import os
 
 # load environment variables
@@ -8,7 +10,7 @@ load_dotenv()
 
 # create FastAPI app
 app = FastAPI(
-    title="Open Integrate",
+    title="Open Integrate API",
     description="AI-powered data integration platform",
     version="1.0.0"
 )
@@ -22,6 +24,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class ParseDocRequest(BaseModel):
+    url: str
+
 # basic health check endpoint
 @app.get("/")
 async def root():
@@ -30,3 +35,21 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+@app.post("/api/parse-doc")
+async def parse_doc(request: ParseDocRequest):
+    if not request.url.strip():
+        raise HTTPException(status_code=400, detail="URL is required")
+    
+    # Use the API parser to analyze the documentation
+    api_parser = get_api_parser()
+    result = api_parser.parse_api_documentation(request.url.strip())
+    
+    if result['status'] == 'error':
+        raise HTTPException(status_code=500, detail=f"Failed to parse API documentation: {result.get('error', 'Unknown error')}")
+    
+    return result
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

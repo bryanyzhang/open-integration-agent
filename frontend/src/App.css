@@ -89,6 +89,43 @@ main {
   cursor: not-allowed;
 }
 
+.error {
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  color: #c33;
+}
+
+.error h3 {
+  margin: 0 0 0.5rem 0;
+  color: #c33;
+}
+
+.response {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+.response h3 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.response pre {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
 .examples {
   border-top: 1px solid #e1e5e9;
   padding-top: 2rem;

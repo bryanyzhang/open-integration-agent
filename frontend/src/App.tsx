@@ -4,19 +4,35 @@ import './App.css'
 function App() {
   const [url, setUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [response, setResponse] = useState<string>('')
+  const [error, setError] = useState<string>('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!url.trim()) return
 
     setIsLoading(true)
+    setError('')
+    setResponse('')
+    
     try {
-      // TODO: Call backend API to start integration
-      console.log('Starting integration for:', url)
-      // For now, just simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      const response = await fetch('/api/parse-doc', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: url.trim() })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      setResponse(JSON.stringify(data, null, 2))
     } catch (error) {
       console.error('Integration failed:', error)
+      setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setIsLoading(false)
     }
@@ -49,6 +65,20 @@ function App() {
                 </button>
               </div>
             </form>
+
+            {error && (
+              <div className="error">
+                <h3>Error:</h3>
+                <p>{error}</p>
+              </div>
+            )}
+
+            {response && (
+              <div className="response">
+                <h3>Backend Response:</h3>
+                <pre>{response}</pre>
+              </div>
+            )}
 
             <div className="examples">
               <h3>Example API Documentation URLs:</h3>
