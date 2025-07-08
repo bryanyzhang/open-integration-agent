@@ -52,6 +52,15 @@ The system is designed to integrate with well-documented APIs including:
 - **Zendesk** - Customer support
 - **Jira** - Project management
 
+### ⚠️ HubSpot Integration Caveats
+
+- **HubSpot integration works** with a valid Private App Token (PAT) from a production (non-developer, non-sandbox) portal.
+- The PAT must have the correct scopes (e.g., `crm.objects.contacts.read`, `crm.objects.companies.read`, `crm.objects.deals.read`, etc.).
+- The PAT must be active and from the same portal as the data you are accessing.
+- Use the PAT in the `Authorization: Bearer <token>` header for all API calls.
+- **Developer/test/sandbox portals may not work** with PATs for CRM v3 endpoints; these may require OAuth 2.0 instead.
+- If you get authentication errors, double-check your portal type, token, and scopes.
+
 ## 🛠️ Technology Stack
 
 ### Backend
@@ -83,7 +92,8 @@ npm install
 # Set your API keys in .env file
 echo "ANTHROPIC_API_KEY=your_anthropic_api_key_here" > .env
 echo "ACHO_TOKEN=your_acho_token_here" >> .env
-echo "STRIPE_SK=your_stripe_secret_key_here" >> .env  
+echo "STRIPE_SK=your_stripe_secret_key_here" >> .env  # Optional: for Stripe API testing
+echo "HUBSPOT_API_KEY=your_hubspot_api_key_here" >> .env  # Optional: for HubSpot API testing
 echo "GOOGLE_API_KEY=your_google_api_key_here" >> .env  # Optional: for Gemini Pro
 python main.py
 ```
@@ -142,43 +152,6 @@ The parser intelligently chooses the best AI model for each analysis:
 - ✅ **Better handling** of complex API documentation
 - ✅ **Automatic model selection** for optimal performance
 
-### 🎯 Best Practices for Optimal Results
-
-#### **1. Choose the Right Documentation URLs**
-For best entity extraction, avoid overview pages
-
-#### **2. Proven High-Yield URLs**
-These URLs consistently extract 10+ entities:
-
-**✅ Tested & Verified:**
-- **Petstore API**: `https://petstore.swagger.io/` (17 entities)
-- **JSONPlaceholder**: `https://jsonplaceholder.typicode.com/` (12 entities)
-- **HubSpot Objects**: `https://developers.hubspot.com/docs/api/crm/objects` (10 entities)
-
-**🔄 Target Platforms (Alternative URLs):**
-- **Stripe**: `https://stripe.com/docs/api/charges`, `https://stripe.com/docs/api/customers`
-- **Zendesk**: `https://developer.zendesk.com/api-reference/ticketing/introduction/`
-- **Shopify**: `https://shopify.dev/docs/api/admin-rest`, `https://shopify.dev/docs/api/storefront`
-- **QuickBooks**: `https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities`
-- **Jira**: `https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/`
-
-#### **3. Avoid These URL Types**
-- ❌ **Overview pages** (usually only 3-5 entities)
-- ❌ **Landing pages** (minimal endpoint information)
-- ❌ **Authentication-only pages** (no endpoint listings)
-- ❌ **Rate-limited or blocked pages** (403/429 errors)
-
 ## 📝 About This Project
 
 This project was created as a takehome assignment for **Aden**. The goal is to demonstrate how intelligent agents can automate complex data onboarding tasks that traditionally require significant manual effort.
-
-## 🧪 Running Unit Tests
-
-Unit tests for the ontology mapping logic are included in `backend/test_ontology_mapper.py` and can be run with:
-
-```bash
-cd backend
-pytest test_ontology_mapper.py
-```
-
-The ontology mapping agent uses Claude 3.5 Sonnet in production, but the unit tests mock the Claude API for fast, reliable testing. 

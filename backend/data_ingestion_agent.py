@@ -141,6 +141,16 @@ def generate_auth_headers(api_spec: Dict) -> str:
             "  authHeaders['Authorization'] = 'Basic YOUR_STRIPE_KEY';\n"
             "}"
         )
+    # HubSpot: emit a JS block
+    elif 'hubspot' in api_spec.get('url', '').lower() or 'hubspot' in api_spec.get('title', '').lower():
+        return (
+            "let authHeaders = {};\n"
+            "if (process.env.HUBSPOT_API_KEY) {\n"
+            "  authHeaders['Authorization'] = 'Bearer ' + process.env.HUBSPOT_API_KEY;\n"
+            "} else {\n"
+            "  authHeaders['Authorization'] = 'Bearer YOUR_HUBSPOT_API_KEY';\n"
+            "}"
+        )
     # Default: emit a JS object
     headers = {}
     if auth_info.get('type') == 'bearer':
@@ -519,12 +529,19 @@ def execute_ingestion_sdk(api_spec: Dict, mapping: Dict, acho_token: str) -> Dic
         env_vars = os.environ.copy()
         env_vars["NODE_PATH"] = os.path.join(os.path.dirname(__file__), "node_modules")
         
-        # Ensure Stripe API key is passed if available
+        # Ensure API keys are passed if available
         if 'stripe' in api_spec.get('url', '').lower() or 'stripe' in api_spec.get('title', '').lower():
             stripe_key = os.getenv('STRIPE_SK')
             if stripe_key:
                 env_vars['STRIPE_SK'] = stripe_key
                 print(f"Passing STRIPE_SK to Node.js process")
+        
+        # Pass HubSpot API key if available
+        if 'hubspot' in api_spec.get('url', '').lower() or 'hubspot' in api_spec.get('title', '').lower():
+            hubspot_key = os.getenv('HUBSPOT_API_KEY')
+            if hubspot_key:
+                env_vars['HUBSPOT_API_KEY'] = hubspot_key
+                print(f"Passing HUBSPOT_API_KEY to Node.js process")
         
         result = subprocess.run(
             ['node', script_path],
