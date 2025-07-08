@@ -126,6 +126,20 @@ main {
   margin: 0;
 }
 
+.success-message {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+  padding: 1rem;
+  color: #155724;
+}
+
+.success-message p {
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
 .examples {
   border-top: 1px solid #e1e5e9;
   padding-top: 2rem;

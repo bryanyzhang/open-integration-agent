@@ -274,7 +274,13 @@ Respond with this exact JSON structure:
             "method": "GET/POST/PUT/DELETE",
             "path": "/api/endpoint",
             "description": "What this endpoint does",
-            "data_type": "What type of data this returns (users, orders, etc.)"
+            "data_type": "What type of data this returns (users, orders, etc.)",
+            "pagination": {{
+                "type": "page_based|status_based|cursor_based|none",
+                "required_params": ["param1", "param2"],
+                "default_values": {{"param1": "value1", "param2": "value2"}},
+                "description": "How pagination works for this endpoint"
+            }}
         }}
     ],
     "data_models": [
@@ -285,9 +291,15 @@ Respond with this exact JSON structure:
         }}
     ],
     "rate_limits": "Rate limiting information if available",
-    "pagination": "How pagination works (if mentioned)",
+    "pagination": "General pagination information if mentioned",
     "integration_notes": "Important details for data integration"
 }}
+
+Pagination types:
+- "page_based": Uses page/limit or offset/limit parameters
+- "status_based": Uses status or filter parameters to get different data sets
+- "cursor_based": Uses cursor or token-based pagination
+- "none": No pagination, returns all data in one request
 
 If any information is not available, use "Not specified" for that field. Be as comprehensive as possible in extracting ALL endpoints and entity types mentioned in the documentation."""
 

@@ -10,6 +10,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@acho-inc/acho-js": "^1.9.3"
+    "@acho-inc/acho-js": "^1.9.4",
+    "axios-rate-limit": "^1.4.0",
+    "axios-retry": "^4.5.0"
   }
 }

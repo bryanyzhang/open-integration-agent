@@ -10,10 +10,16 @@ httpx # http client
 
 # Web scraping and parsing
 beautifulsoup4 # web scraping
+lxml  # XML/HTML parser for BeautifulSoup
 
 # AI/LLM
 anthropic # claude
 google-generativeai # gemini
 
-# Development
-python-multipart # handle file uploads + form data
+# Development and testing
+python-multipart  # handle file uploads + form data
+pytest  # testing framework
+pytest-asyncio # async testing support
+
+# Additional utilities
+typing-extensions  # enhanced typing support

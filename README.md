@@ -38,6 +38,8 @@ We are trying to:
 - **Multi-Platform Support**: Successfully tested with all 6 target platforms (Stripe, HubSpot, Shopify, QuickBooks, Zendesk, Jira)
 - **Structured Data Extraction**: Extracts endpoints, authentication, rate limits, pagination, and integration notes
 - **Ontology Mapper Agent**: Maps API endpoints/entities to ontology tables using name similarity
+- **Data Ingestion Agent**: Generates and executes SDK code to extract data from APIs and ingest into Acho
+- **End-to-End Pipeline**: Complete workflow from API parsing to data ingestion with error handling
 
 ### 🎯 Target Platforms
 
@@ -77,8 +79,11 @@ The system is designed to integrate with well-documented APIs including:
 ```bash
 cd backend
 pip install -r requirements.txt
+npm install
 # Set your API keys in .env file
 echo "ANTHROPIC_API_KEY=your_anthropic_api_key_here" > .env
+echo "ACHO_TOKEN=your_acho_token_here" >> .env
+echo "STRIPE_SK=your_stripe_secret_key_here" >> .env  
 echo "GOOGLE_API_KEY=your_google_api_key_here" >> .env  # Optional: for Gemini Pro
 python main.py
 ```
@@ -92,7 +97,7 @@ npm run dev
 
 The backend will run on `http://localhost:8000` and the frontend on `http://localhost:3000`.
 
-## 🧪 Testing the API Parser and Ontology Mapper
+## 🧪 Testing the Full Pipeline
 
 Test the intelligent parser with any API documentation URL:
 
@@ -102,30 +107,26 @@ curl -X POST "http://localhost:8000/api/parse-doc" \
   -d '{"url": "https://docs.stripe.com/api"}'
 ```
 
-Test the ontology mapping agent with a parsed API spec and ontology schema:
+Test the complete data ingestion pipeline:
 
 ```bash
+# 1. Parse API documentation
+curl -X POST "http://localhost:8000/api/parse-doc" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://docs.stripe.com/api"}'
+
+# 2. Map to ontology (returns mapping)
 curl -X POST "http://localhost:8000/api/map-ontology" \
   -H "Content-Type: application/json" \
-  -d '{
-    "api_spec": {
-      "endpoints": [
-        {"path": "/api/users", "data_type": "users", "description": "Get all users"},
-        {"path": "/api/orders", "data_type": "orders", "description": "Get all orders"}
-      ],
-      "data_models": [
-        {"name": "users", "fields": ["id", "name", "email"]},
-        {"name": "orders", "fields": ["id", "user_id", "total"]}
-      ]
-    },
-    "ontology_schema": {
-      "tables": [
-        {"name": "users", "fields": ["id", "name", "email"]},
-        {"name": "orders", "fields": ["id", "user_id", "total"]}
-      ]
-    }
-  }'
+  -d '{"api_spec": {...}, "acho_token": "your_acho_token_here"}'
+
+# 3. Ingest data (generates SDK and executes)
+curl -X POST "http://localhost:8000/api/ingest-data" \
+  -H "Content-Type: application/json" \
+  -d '{"api_spec": {...}, "mapping": {...}}'
 ```
+
+The frontend automatically chains all three endpoints for a complete integration workflow.
 
 ### 🤖 Multi-Model AI Architecture
 

@@ -8,33 +8,53 @@ function App() {
   const [error, setError] = useState<string>('')
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!url.trim()) return
+    e.preventDefault();
+    if (!url.trim()) return;
 
-    setIsLoading(true)
-    setError('')
-    setResponse('')
+    setIsLoading(true);
+    setError('');
+    setResponse('');
     
     try {
-      const response = await fetch('/api/parse-doc', {
+      // 1. Parse doc
+      const parseRes = await fetch('/api/parse-doc', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: url.trim() })
-      })
+      });
+      if (!parseRes.ok) throw new Error('Failed to parse doc');
+      const apiSpec = await parseRes.json();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      // 2. Map ontology
+      const mapRes = await fetch('/api/map-ontology', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_spec: apiSpec })
+      });
+      if (!mapRes.ok) throw new Error('Failed to map ontology');
+      const mapping = await mapRes.json();
+
+      // 3. Ingest data
+      const ingestRes = await fetch('/api/ingest-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_spec: apiSpec, mapping })
+      });
+      if (!ingestRes.ok) throw new Error('Failed to ingest data');
+      const ingestResult = await ingestRes.json();
+
+      // Handle different response formats
+      if (ingestResult.status === 'no_data') {
+        setResponse(`✅ ${ingestResult.message}\n\n${ingestResult.details}`);
+      } else if (ingestResult.error) {
+        setError(ingestResult.error);
+      } else {
+        setResponse(JSON.stringify(ingestResult, null, 2));
       }
-
-      const data = await response.json()
-      setResponse(JSON.stringify(data, null, 2))
     } catch (error) {
-      console.error('Integration failed:', error)
-      setError(error instanceof Error ? error.message : 'An error occurred')
+      setError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -75,8 +95,14 @@ function App() {
 
             {response && (
               <div className="response">
-                <h3>Backend Response:</h3>
-                <pre>{response}</pre>
+                <h3>Integration Result:</h3>
+                {response.includes('✅') ? (
+                  <div className="success-message">
+                    <p>{response}</p>
+                  </div>
+                ) : (
+                  <pre>{response}</pre>
+                )}
               </div>
             )}
 

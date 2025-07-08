@@ -3,7 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware # lets us make requests from 
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from api_parser import get_api_parser
+from ontology_mapper import map_api_to_ontology
 import os
+from typing import Optional
 
 # load environment variables
 load_dotenv()
@@ -29,7 +31,12 @@ class ParseDocRequest(BaseModel):
 
 class MapOntologyRequest(BaseModel):
     api_spec: dict
-    ontology_schema: dict
+    acho_token: Optional[str] = None
+
+class IngestDataRequest(BaseModel):
+    api_spec: dict
+    mapping: dict
+    acho_token: Optional[str] = None
 
 # basic health check endpoint
 @app.get("/")
@@ -56,9 +63,22 @@ async def parse_doc(request: ParseDocRequest):
 
 @app.post("/api/map-ontology")
 async def map_ontology(request: MapOntologyRequest):
-    from ontology_mapper import map_api_to_ontology
-    mapping = map_api_to_ontology(request.api_spec, request.ontology_schema)
+    # Use provided token or fall back to environment variable
+    acho_token = request.acho_token or os.getenv('ACHO_TOKEN')
+    if not acho_token:
+        raise HTTPException(status_code=400, detail="ACHO_TOKEN not provided and not found in environment")
+    mapping = map_api_to_ontology(request.api_spec, acho_token)
     return mapping
+
+@app.post("/api/ingest-data")
+async def ingest_data(request: IngestDataRequest):
+    from data_ingestion_agent import execute_ingestion_sdk
+    # Use provided token or fall back to environment variable
+    acho_token = request.acho_token or os.getenv('ACHO_TOKEN')
+    if not acho_token:
+        raise HTTPException(status_code=400, detail="ACHO_TOKEN not provided and not found in environment")
+    result = execute_ingestion_sdk(request.api_spec, request.mapping, acho_token)
+    return result
 
 if __name__ == "__main__":
     import uvicorn
