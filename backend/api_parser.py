@@ -2,8 +2,7 @@ import requests
 from bs4 import BeautifulSoup, Tag
 from typing import Dict
 import anthropic
-# DISABLED FOR DEV: Comment out Gemini import to avoid rate limits
-# import google.generativeai as genai
+import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 
@@ -22,16 +21,18 @@ class IntelligentAPIParser:
         self.gemini_client = None
         
         # Try to initialize Gemini if API key is available
-        # DISABLED FOR DEV: Comment out Gemini to avoid rate limits
-        # gemini_api_key = os.getenv('GOOGLE_API_KEY')
-        # if gemini_api_key:
-        #     try:
-        #         genai.configure(api_key=gemini_api_key)
-        #         self.gemini_client = genai.GenerativeModel('gemini-1.5-pro')
-        #     except Exception as e:
-        #         print(f"Warning: Could not initialize Gemini client: {e}")
-        #         self.gemini_client = None
-        self.gemini_client = None  # Force Claude-only mode
+        gemini_api_key = os.getenv('GOOGLE_API_KEY')
+        if gemini_api_key:
+            try:
+                genai.configure(api_key=gemini_api_key)
+                self.gemini_client = genai.GenerativeModel('gemini-1.5-pro')
+                print("Gemini client initialized successfully")
+            except Exception as e:
+                print(f"Warning: Could not initialize Gemini client: {e}")
+                self.gemini_client = None
+        else:
+            print("No GOOGLE_API_KEY found, using Claude-only mode")
+            self.gemini_client = None
         
         if not os.getenv('ANTHROPIC_API_KEY'):
             raise ValueError("ANTHROPIC_API_KEY environment variable is required")
@@ -202,6 +203,8 @@ Respond with this exact JSON structure:
 If any information is not available, use "Not specified" for that field. Be as comprehensive as possible in extracting ALL endpoints and entity types mentioned in the documentation."""
 
         try:
+            if self.gemini_client is None:
+                raise Exception("Gemini client not initialized")
             response = self.gemini_client.generate_content([system_prompt, user_prompt])
             gemini_response = response.text.strip()
             
