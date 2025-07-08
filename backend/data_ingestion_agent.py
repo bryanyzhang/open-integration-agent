@@ -151,6 +151,67 @@ def generate_auth_headers(api_spec: Dict) -> str:
             "  authHeaders['Authorization'] = 'Bearer YOUR_HUBSPOT_API_KEY';\n"
             "}"
         )
+    # Shopify: emit a JS block
+    elif 'shopify' in api_spec.get('url', '').lower() or 'shopify' in api_spec.get('title', '').lower():
+        return (
+            "let authHeaders = {};\n"
+            "if (process.env.SHOPIFY_ACCESS_TOKEN) {\n"
+            "  authHeaders['X-Shopify-Access-Token'] = process.env.SHOPIFY_ACCESS_TOKEN;\n"
+            "} else {\n"
+            "  authHeaders['X-Shopify-Access-Token'] = 'YOUR_SHOPIFY_ACCESS_TOKEN';\n"
+            "}"
+        )
+    # QuickBooks: emit a JS block
+    elif 'quickbooks' in api_spec.get('url', '').lower() or 'intuit' in api_spec.get('url', '').lower() or 'quickbooks' in api_spec.get('title', '').lower():
+        return (
+            "let authHeaders = {};\n"
+            "if (process.env.QBO_ACCESS_TOKEN) {\n"
+            "  authHeaders['Authorization'] = 'Bearer ' + process.env.QBO_ACCESS_TOKEN;\n"
+            "} else {\n"
+            "  authHeaders['Authorization'] = 'Bearer YOUR_QBO_ACCESS_TOKEN';\n"
+            "}\n"
+            "authHeaders['Accept'] = 'application/json';\n"
+            "authHeaders['Content-Type'] = 'application/json';"
+        )
+    # Zendesk: emit a JS block
+    elif 'zendesk' in api_spec.get('url', '').lower() or 'zendesk' in api_spec.get('title', '').lower():
+        return (
+            "let authHeaders = {};\n"
+            "if (process.env.ZENDESK_OAUTH_TOKEN) {\n"
+            "  authHeaders['Authorization'] = 'Bearer ' + process.env.ZENDESK_OAUTH_TOKEN;\n"
+            "} else if (process.env.ZENDESK_EMAIL && process.env.ZENDESK_API_TOKEN) {\n"
+            "  const tokenString = process.env.ZENDESK_EMAIL + '/token:' + process.env.ZENDESK_API_TOKEN;\n"
+            "  authHeaders['Authorization'] = 'Basic ' + Buffer.from(tokenString).toString('base64');\n"
+            "} else {\n"
+            "  authHeaders['Authorization'] = 'Basic YOUR_ZENDESK_BASIC_AUTH';\n"
+            "}\n"
+            "authHeaders['Content-Type'] = 'application/json';"
+        )
+    # Jira: emit a JS block
+    elif 'jira' in api_spec.get('url', '').lower() or 'atlassian' in api_spec.get('url', '').lower() or 'jira' in api_spec.get('title', '').lower():
+        return (
+            "let authHeaders = {};\n"
+            "if (process.env.JIRA_AUTH_METHOD === 'oauth' && process.env.JIRA_OAUTH_TOKEN) {\n"
+            "  authHeaders['Authorization'] = 'Bearer ' + process.env.JIRA_OAUTH_TOKEN;\n"
+            "} else if (process.env.JIRA_EMAIL && process.env.JIRA_API_TOKEN) {\n"
+            "  const tokenString = process.env.JIRA_EMAIL + ':' + process.env.JIRA_API_TOKEN;\n"
+            "  authHeaders['Authorization'] = 'Basic ' + Buffer.from(tokenString).toString('base64');\n"
+            "} else {\n"
+            "  authHeaders['Authorization'] = 'Basic YOUR_JIRA_BASIC_AUTH';\n"
+            "}\n"
+            "authHeaders['Content-Type'] = 'application/json';"
+        )
+    # Ramp: emit a JS block
+    elif 'ramp' in api_spec.get('url', '').lower() or 'ramp' in api_spec.get('title', '').lower():
+        return (
+            "let authHeaders = {};\n"
+            "if (process.env.RAMP_API_KEY) {\n"
+            "  authHeaders['Authorization'] = 'Bearer ' + process.env.RAMP_API_KEY;\n"
+            "} else {\n"
+            "  authHeaders['Authorization'] = 'Bearer YOUR_RAMP_API_KEY';\n"
+            "}\n"
+            "authHeaders['Content-Type'] = 'application/json';"
+        )
     # Default: emit a JS object
     headers = {}
     if auth_info.get('type') == 'bearer':
@@ -542,6 +603,90 @@ def execute_ingestion_sdk(api_spec: Dict, mapping: Dict, acho_token: str) -> Dic
             if hubspot_key:
                 env_vars['HUBSPOT_API_KEY'] = hubspot_key
                 print(f"Passing HUBSPOT_API_KEY to Node.js process")
+        
+        # Pass Shopify API token and store domain if available
+        if 'shopify' in api_spec.get('url', '').lower() or 'shopify' in api_spec.get('title', '').lower():
+            shopify_token = os.getenv('SHOPIFY_ACCESS_TOKEN')
+            shopify_domain = os.getenv('SHOPIFY_STORE_DOMAIN')
+            if shopify_token:
+                env_vars['SHOPIFY_ACCESS_TOKEN'] = shopify_token
+                print(f"Passing SHOPIFY_ACCESS_TOKEN to Node.js process")
+            if shopify_domain:
+                env_vars['SHOPIFY_STORE_DOMAIN'] = shopify_domain
+                print(f"Passing SHOPIFY_STORE_DOMAIN to Node.js process")
+        # Note: Shopify base URL should be constructed as https://{SHOPIFY_STORE_DOMAIN}/admin/api/2023-10/
+        
+        # Pass QuickBooks API token, company ID, and environment if available
+        if 'quickbooks' in api_spec.get('url', '').lower() or 'intuit' in api_spec.get('url', '').lower() or 'quickbooks' in api_spec.get('title', '').lower():
+            qbo_token = os.getenv('QBO_ACCESS_TOKEN')
+            qbo_company_id = os.getenv('QBO_COMPANY_ID')
+            qbo_env = os.getenv('QBO_ENV', 'sandbox')
+            if qbo_token:
+                env_vars['QBO_ACCESS_TOKEN'] = qbo_token
+                print(f"Passing QBO_ACCESS_TOKEN to Node.js process")
+            if qbo_company_id:
+                env_vars['QBO_COMPANY_ID'] = qbo_company_id
+                print(f"Passing QBO_COMPANY_ID to Node.js process")
+            if qbo_env:
+                env_vars['QBO_ENV'] = qbo_env
+                print(f"Passing QBO_ENV to Node.js process")
+        # Note: QBO base URL should be constructed as https://sandbox-quickbooks.api.intuit.com/v3/company/{QBO_COMPANY_ID}/ or https://quickbooks.api.intuit.com/v3/company/{QBO_COMPANY_ID}/ depending on QBO_ENV
+        
+        # Pass Zendesk credentials if available
+        if 'zendesk' in api_spec.get('url', '').lower() or 'zendesk' in api_spec.get('title', '').lower():
+            zendesk_email = os.getenv('ZENDESK_EMAIL')
+            zendesk_token = os.getenv('ZENDESK_API_TOKEN')
+            zendesk_subdomain = os.getenv('ZENDESK_SUBDOMAIN')
+            zendesk_oauth = os.getenv('ZENDESK_OAUTH_TOKEN')
+            if zendesk_email:
+                env_vars['ZENDESK_EMAIL'] = zendesk_email
+                print(f"Passing ZENDESK_EMAIL to Node.js process")
+            if zendesk_token:
+                env_vars['ZENDESK_API_TOKEN'] = zendesk_token
+                print(f"Passing ZENDESK_API_TOKEN to Node.js process")
+            if zendesk_subdomain:
+                env_vars['ZENDESK_SUBDOMAIN'] = zendesk_subdomain
+                print(f"Passing ZENDESK_SUBDOMAIN to Node.js process")
+            if zendesk_oauth:
+                env_vars['ZENDESK_OAUTH_TOKEN'] = zendesk_oauth
+                print(f"Passing ZENDESK_OAUTH_TOKEN to Node.js process")
+        # Note: Zendesk base URL should be constructed as https://{ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/
+        
+        # Pass Jira credentials if available
+        if 'jira' in api_spec.get('url', '').lower() or 'atlassian' in api_spec.get('url', '').lower() or 'jira' in api_spec.get('title', '').lower():
+            jira_email = os.getenv('JIRA_EMAIL')
+            jira_token = os.getenv('JIRA_API_TOKEN')
+            jira_domain = os.getenv('JIRA_DOMAIN')
+            jira_cloud_id = os.getenv('JIRA_CLOUD_ID')
+            jira_oauth = os.getenv('JIRA_OAUTH_TOKEN')
+            jira_auth_method = os.getenv('JIRA_AUTH_METHOD', 'basic')
+            if jira_email:
+                env_vars['JIRA_EMAIL'] = jira_email
+                print(f"Passing JIRA_EMAIL to Node.js process")
+            if jira_token:
+                env_vars['JIRA_API_TOKEN'] = jira_token
+                print(f"Passing JIRA_API_TOKEN to Node.js process")
+            if jira_domain:
+                env_vars['JIRA_DOMAIN'] = jira_domain
+                print(f"Passing JIRA_DOMAIN to Node.js process")
+            if jira_cloud_id:
+                env_vars['JIRA_CLOUD_ID'] = jira_cloud_id
+                print(f"Passing JIRA_CLOUD_ID to Node.js process")
+            if jira_oauth:
+                env_vars['JIRA_OAUTH_TOKEN'] = jira_oauth
+                print(f"Passing JIRA_OAUTH_TOKEN to Node.js process")
+            if jira_auth_method:
+                env_vars['JIRA_AUTH_METHOD'] = jira_auth_method
+                print(f"Passing JIRA_AUTH_METHOD to Node.js process")
+        # Note: Jira base URL should be https://{JIRA_DOMAIN}/rest/api/3/ (Basic) or https://api.atlassian.com/ex/jira/{JIRA_CLOUD_ID}/rest/api/3/ (OAuth)
+        
+        # Pass Ramp API key if available
+        if 'ramp' in api_spec.get('url', '').lower() or 'ramp' in api_spec.get('title', '').lower():
+            ramp_key = os.getenv('RAMP_API_KEY')
+            if ramp_key:
+                env_vars['RAMP_API_KEY'] = ramp_key
+                print(f"Passing RAMP_API_KEY to Node.js process")
+        # Note: Ramp base URL should be https://api.ramp.com/developer/v1/
         
         result = subprocess.run(
             ['node', script_path],

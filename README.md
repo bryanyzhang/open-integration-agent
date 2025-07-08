@@ -52,7 +52,16 @@ The system is designed to integrate with well-documented APIs including:
 - **Zendesk** - Customer support
 - **Jira** - Project management
 
-### ⚠️ HubSpot Integration Caveats
+### ⚠️ Stripe Integration 
+
+- **Stripe integration works** with a valid secret API key (starts with `sk_`).
+- Use the API key in the `Authorization: Bearer <your_stripe_secret_key>` header for all API calls.
+- The base URL should be `https://api.stripe.com/v1/`.
+- Stripe supports both test and live modes; use the appropriate key for your environment.
+- All requests must be made over HTTPS.
+- See [Stripe API Docs](https://docs.stripe.com/api) for more details.
+
+### ⚠️ HubSpot Integration 
 
 - **HubSpot integration works** with a valid Private App Token (PAT) from a production (non-developer, non-sandbox) portal.
 - The PAT must have the correct scopes (e.g., `crm.objects.contacts.read`, `crm.objects.companies.read`, `crm.objects.deals.read`, etc.).
@@ -60,6 +69,46 @@ The system is designed to integrate with well-documented APIs including:
 - Use the PAT in the `Authorization: Bearer <token>` header for all API calls.
 - **Developer/test/sandbox portals may not work** with PATs for CRM v3 endpoints; these may require OAuth 2.0 instead.
 - If you get authentication errors, double-check your portal type, token, and scopes.
+
+### ⚠️ Shopify Integration 
+
+- **Shopify integration works** with a valid Admin API access token and store domain.
+- The access token must be generated from a custom/private app in your Shopify store.
+- Use the token in the `X-Shopify-Access-Token` header for all Admin API calls.
+- The base URL should be `https://{SHOPIFY_STORE_DOMAIN}/admin/api/2023-10/`.
+- See [Shopify API Docs](https://shopify.dev/docs/api) for more details.
+
+### ⚠️ QuickBooks Integration 
+
+- **QuickBooks integration works** with a valid OAuth 2.0 access token and company ID.
+- The access token must be generated via the OAuth 2.0 flow for your QuickBooks app.
+- Use the token in the `Authorization: Bearer <token>` header for all API calls.
+- The base URL should be `https://sandbox-quickbooks.api.intuit.com/v3/company/{companyId}/` (sandbox) or `https://quickbooks.api.intuit.com/v3/company/{companyId}/` (production).
+- See [QuickBooks API Docs](https://developer.intuit.com/app/developer/qbo/docs/develop) for more details.
+
+### ⚠️ Zendesk Integration 
+
+- **Zendesk integration works** with either an API token (email/token) or OAuth 2.0 access token.
+- For API token, use your Zendesk email and API token.
+- For OAuth, use the access token in the `Authorization: Bearer <token>` header.
+- The base URL should be `https://{ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/`.
+- See [Zendesk API Docs](https://developer.zendesk.com/api-reference/ticketing/introduction/) for more details.
+
+### ⚠️ Jira Integration 
+
+- **Jira integration works** with either an API token (email/token) or OAuth 2.0 access token.
+- For API token, use your Atlassian email and API token.
+- For OAuth, use the access token in the `Authorization: Bearer <token>` header.
+- The base URL should be `https://{JIRA_DOMAIN}/rest/api/3/` (Basic) or `https://api.atlassian.com/ex/jira/{JIRA_CLOUD_ID}/rest/api/3/` (OAuth).
+- See [Jira API Docs](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#about) for more details.
+
+### ⚠️ Ramp Integration
+
+- **Ramp integration works** with a valid API key.
+- Use the API key in the `Authorization: Bearer <your_ramp_api_key>` header for all API calls.
+- The base URL should be `https://api.ramp.com/developer/v1/`.
+- All requests must be made over HTTPS.
+- See [Ramp API Docs](https://docs.ramp.com/developer-api/v1/overview/introduction) for more details.
 
 ## 🛠️ Technology Stack
 
@@ -83,18 +132,13 @@ The system is designed to integrate with well-documented APIs including:
 ### Prerequisites
 - Python 3.12+
 - Node.js 18+
+- requirements.txt
 
 ### Backend Setup
 ```bash
 cd backend
 pip install -r requirements.txt
 npm install
-# Set your API keys in .env file
-echo "ANTHROPIC_API_KEY=your_anthropic_api_key_here" > .env
-echo "ACHO_TOKEN=your_acho_token_here" >> .env
-echo "STRIPE_SK=your_stripe_secret_key_here" >> .env  # Optional: for Stripe API testing
-echo "HUBSPOT_API_KEY=your_hubspot_api_key_here" >> .env  # Optional: for HubSpot API testing
-echo "GOOGLE_API_KEY=your_google_api_key_here" >> .env  # Optional: for Gemini Pro
 python main.py
 ```
 
@@ -105,53 +149,25 @@ npm install
 npm run dev
 ```
 
-The backend will run on `http://localhost:8000` and the frontend on `http://localhost:3000`.
-
-## 🧪 Testing the Full Pipeline
-
-Test the intelligent parser with any API documentation URL:
-
-```bash
-curl -X POST "http://localhost:8000/api/parse-doc" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://docs.stripe.com/api"}'
-```
-
-Test the complete data ingestion pipeline:
-
-```bash
-# 1. Parse API documentation
-curl -X POST "http://localhost:8000/api/parse-doc" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://docs.stripe.com/api"}'
-
-# 2. Map to ontology (returns mapping)
-curl -X POST "http://localhost:8000/api/map-ontology" \
-  -H "Content-Type: application/json" \
-  -d '{"api_spec": {...}, "acho_token": "your_acho_token_here"}'
-
-# 3. Ingest data (generates SDK and executes)
-curl -X POST "http://localhost:8000/api/ingest-data" \
-  -H "Content-Type: application/json" \
-  -d '{"api_spec": {...}, "mapping": {...}}'
-```
-
-The frontend automatically chains all three endpoints for a complete integration workflow.
-
-### 🤖 Multi-Model AI Architecture
-
-The parser intelligently chooses the best AI model for each analysis:
-
-- **Claude Sonnet 4**: Used for smaller content (< 10K chars) and when Gemini unavailable
-- **Gemini Pro**: Used for large content (> 10K chars) with 1M+ token context window
-- **Automatic Fallback**: Seamlessly switches between models based on content size and availability
-
-**Benefits:**
-- ✅ **Larger context windows** (50K chars vs 15K before)
-- ✅ **More comprehensive extraction** of endpoints and entities
-- ✅ **Better handling** of complex API documentation
-- ✅ **Automatic model selection** for optimal performance
-
-## 📝 About This Project
-
-This project was created as a takehome assignment for **Aden**. The goal is to demonstrate how intelligent agents can automate complex data onboarding tasks that traditionally require significant manual effort.
+# Set your API keys in .env file
+echo "ANTHROPIC_API_KEY=your_anthropic_api_key_here" > .env
+echo "ACHO_TOKEN=your_acho_token_here" >> .env
+echo "STRIPE_SK=your_stripe_secret_key_here" >> .env  # Optional: for Stripe API testing
+echo "HUBSPOT_API_KEY=your_hubspot_api_key_here" >> .env  # Optional: for HubSpot API testing
+echo "GOOGLE_API_KEY=your_google_api_key_here" >> .env  # Optional: for Gemini Pro
+echo "SHOPIFY_ACCESS_TOKEN=your_shopify_access_token_here" >> .env  # For Shopify API
+echo "SHOPIFY_STORE_DOMAIN=your-store.myshopify.com" >> .env  # Your Shopify store domain
+echo "QBO_ACCESS_TOKEN=your_quickbooks_oauth_access_token_here" >> .env  # For QuickBooks API
+echo "QBO_COMPANY_ID=your_quickbooks_company_id_here" >> .env  # Your QuickBooks company ID
+echo "QBO_ENV=sandbox" >> .env  # 'sandbox' or 'production'
+echo "ZENDESK_EMAIL=your_email@domain.com" >> .env
+echo "ZENDESK_API_TOKEN=your_zendesk_api_token_here" >> .env
+echo "ZENDESK_SUBDOMAIN=your_subdomain" >> .env # (Optional for OAuth)
+echo "ZENDESK_OAUTH_TOKEN=your_zendesk_oauth_token_here" >> .env
+echo "JIRA_EMAIL=your_email@domain.com" >> .env
+echo "JIRA_API_TOKEN=your_jira_api_token_here" >> .env
+echo "JIRA_DOMAIN=your-domain.atlassian.net" >> .env
+echo "JIRA_CLOUD_ID=your_jira_cloud_id_here" >> .env  # For OAuth 2.0
+echo "JIRA_OAUTH_TOKEN=your_jira_oauth_token_here" >> .env  # For OAuth 2.0
+echo "JIRA_AUTH_METHOD=basic" >> .env  # or 'oauth'
+echo "RAMP_API_KEY=your_ramp_api_key_here" >> .env
